@@ -1,27 +1,35 @@
 from flask import Flask, request, jsonify
 import requests
- 
+import logging
+
+from flask_cors import CORS
+
 app = Flask(__name__)
+CORS(app)
+
  
 @app.route('/api/ir', methods=['POST'])
 def handle_request():
-    data = request.get_json()  # JSON形式のリクエストを取得 #urlを取得
-    print("受け取ったデータ:", data)
+    dataa = request.get_json()  # JSON形式のリクエストを取得 #urlを取得
+    print("受け取ったデータ:", dataa)
+    logging.debug("受け取ったデータ:", dataa.get('url'))
     
     #url
-    url = data.get('url', 'urlなし')
+    url = dataa.get('url', 'urlなし')
 
     #n8n
     api=''
 
     #受けとったurl
-    data = {
+    dataq = {
         'url': url
     }
+    print("受け取ったデータ:", dataq.get('url'))
+    
 
     try:
         # 外部APIへPOST（JSON形式で）
-        response = requests.post(api, json=data)
+        response = requests.post(api, json=dataq)
 
         return jsonify({
             'status': 'success',
