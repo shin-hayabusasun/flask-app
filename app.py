@@ -1,8 +1,6 @@
-import requests
+from webapp import app, db
 
-url = 'http://localhost:5000/api/test'
-payload = {'name': '太郎'}
-
-response = requests.post(url, json=payload)
-
-print(response.json())
+# アプリケーションコンテキストを設定してデータベースを初期化
+with app.app_context():
+    db.create_all()
+    print("データベースが初期化されました。")

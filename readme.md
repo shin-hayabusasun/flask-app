@@ -11,7 +11,13 @@
   シンプルな Flask サーバー。`/api/test` エンドポイントを提供し、JSON データを受け取り、レスポンスとしてメッセージを返します。
 
 - **webapp.py(メイン)**  
-  CORS 対応の Flask サーバー。`/api/ir` エンドポイントを提供し、受け取ったデータを外部 API に転送します。Next.jsサーバーからの通信を想定して、n8n(api)とflaskで処理して、結果をnext.jsに渡します
+  CORS 対応の Flask サーバー。以下のエンドポイントを提供します:
+  - `/api/blog`: 投稿データを受け取り、データベースに保存します。また、保存された投稿データを取得できます。
+  - `/api/blogtest`: フォームから投稿データを受け取り、データベースに保存します。
+  - `/api/ir`: 外部APIにデータを転送します。
+
+- **templates/form.html**  
+  投稿フォームのHTMLテンプレート。
 
 - **readme.md**  
   このプロジェクトの説明を記載したファイルです。
@@ -20,6 +26,52 @@
 
 ### サーバーの起動
 
-1. `test.py` または `webapp.py` を実行してサーバーを起動します。
+1. `webapp.py` を実行してサーバーを起動します。
    ```bash
-   python test.py
+   python webapp.py
+   ```
+
+2. サーバーが起動すると、以下のURLが利用可能になります:
+   - `http://127.0.0.1:5000/api/blog`
+   - `http://127.0.0.1:5000/api/blogtest`
+   - `http://127.0.0.1:5000/api/ir`
+
+### データベースの初期化
+
+1. データベースを初期化するには、`create.py`を実行します。
+   ```bash
+   python create.py
+   ```
+   実行後、`blog.db`というSQLiteデータベースファイルが作成されます。
+
+### 投稿フォームの使用
+
+1. ブラウザで以下のURLを開きます:
+   ```
+   http://127.0.0.1:5000/api/blogtest
+   ```
+2. フォームにタイトルと本文を入力して送信すると、データがデータベースに保存されます。
+
+### APIの使用例
+
+#### `/api/blog` (POST)
+投稿データをJSON形式で送信します。
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"title": "タイトル", "body": "本文"}' http://127.0.0.1:5000/api/blog
+```
+
+#### `/api/blog` (GET)
+保存された投稿データを取得します。
+```bash
+curl http://127.0.0.1:5000/api/blog
+```
+
+#### `/api/ir` (POST)
+外部APIにデータを転送します。
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"url": "https://example.com"}' http://127.0.0.1:5000/api/ir
+```
+
+---
+
+これで、Flaskアプリケーションの使用方法がわかります。必要に応じて、エンドポイントや機能を拡張してください。

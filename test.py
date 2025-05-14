@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 
- 
-app = Flask(__name__)
+
  
 @app.route('/api/test', methods=['POST'])
 def handle_request():
