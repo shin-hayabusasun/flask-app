@@ -21,13 +21,13 @@ class Post(db.Model):
     body = db.Column(db.String(500), nullable=False)
     created_at= db.Column(db.DateTime, nullable=False,default=datetime.now(pytz.timezone('Asia/Tokyo')))
 
-def to_dict(self):
-        return {
-            'id': self.id,
-            'title': self.title,
-            'body': self.body,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        }
+    def to_dict(self):
+            return {
+                'id': self.id,
+                'title': self.title,
+                'body': self.body,
+                'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
 
 @app.route('/api/blog', methods=['GET','POST'])
 def handle_request():
