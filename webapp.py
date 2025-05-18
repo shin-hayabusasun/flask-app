@@ -51,7 +51,13 @@ def handle_request():
     else:
         posts=Post.query.all()
         return jsonify([post.to_dict() for post in posts])
-    
+@app.route('/api/blog/<int:post_id>', methods=['GET'])
+def get_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    print("受け取ったデータ:", post.to_dict())
+    return jsonify(post.to_dict())
+
+
         
 
 @app.route('/api/blogtest', methods=['GET','POST'])
