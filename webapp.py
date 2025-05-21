@@ -2,16 +2,26 @@ from flask import Flask, request, jsonify
 import requests
 import logging
 from flask_sqlalchemy import SQLAlchemy
+import os
 from datetime  import datetime
 import pytz
 from flask_cors import CORS
 from flask import render_template
+from flask_login import LoginManager, UserMixin,login_user,logout_user,login_required #login用
+from werkzeug.security import generate_password_hash, check_password_hash #login用ハッシュ
 
 app = Flask(__name__)
-CORS(app)
+CORS(app,supports_credentials=True) #CORSを有効にする.セッションを有効にするためにsupports_credentials=Trueを指定
+
+#login用
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.urandom(24) #ランダムなシークレットキーを生成セッション
 db = SQLAlchemy(app)
 #設定
 
@@ -20,7 +30,6 @@ class Post(db.Model):
     title = db.Column(db.String(30), nullable=False)
     body = db.Column(db.String(500), nullable=False)
     created_at= db.Column(db.DateTime, nullable=False,default=datetime.now(pytz.timezone('Asia/Tokyo')))
-
     def to_dict(self):
             return {
                 'id': self.id,
@@ -28,6 +37,53 @@ class Post(db.Model):
                 'body': self.body,
                 'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }
+
+#login用
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id)) #有効なセッションがある場合にユーザーを取得
+
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # パスワードをハッシュ化
+    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+
+    new_user = User(username=username, password=hashed_password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({'message': 'User created successfully'}), 201
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.query.filter_by(username=username).first()
+
+    if user and check_password_hash(user.password, password): #check_password_hash(db.password, password):
+        # ログイン成功
+        login_user(user)  # Flask-Loginを使用してユーザーをログインさせる
+        return jsonify({'message': 'Login successful'}), 200 #セッションも送られる
+    else:
+        # ログイン失敗
+        return jsonify({'message': 'Invalid credentials'}), 401
+
+@app.route('/api/logout', methods=['POST'])
+@login_required #セッションが有効な場合のみアクセス可能
+def logout():
+    logout_user() # Flask-Loginを使用してユーザーをログアウトさせる
+
 
 @app.route('/api/blog', methods=['GET','POST'])
 def handle_request():

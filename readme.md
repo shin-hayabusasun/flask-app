@@ -11,8 +11,12 @@
   シンプルな Flask サーバー。`/api/test` エンドポイントを提供し、JSON データを受け取り、レスポンスとしてメッセージを返します。
 
 - **webapp.py(メイン)**  
-  CORS 対応の Flask サーバー。以下のエンドポイントを提供します:
-  - `/api/blog`: 投稿データを受け取り、データベースに保存します。また、保存された投稿データを取得できます。
+  CORS 対応の Flask サーバー。ユーザー認証（サインアップ・ログイン・ログアウト）と投稿APIを提供します。
+  - `/api/signup`: ユーザー登録（パスワードはハッシュ化して保存）
+  - `/api/login`: ログイン（Flask-Loginでセッション管理。ログイン成功時はセッションクッキーが自動で返されます）
+  - `/api/logout`: ログアウト（@login_required付き。セッションが有効な場合のみアクセス可能）
+  - `/api/blog`: 投稿データの登録・取得（POST/GET）
+  - `/api/blog/<int:post_id>`: 投稿データの個別取得
   - `/api/blogtest`: フォームから投稿データを受け取り、データベースに保存します。
   - `/api/ir`: 外部APIにデータを転送します。
 
@@ -32,7 +36,11 @@
    ```
 
 2. サーバーが起動すると、以下のURLが利用可能になります:
+   - `http://127.0.0.1:5000/api/signup`
+   - `http://127.0.0.1:5000/api/login`
+   - `http://127.0.0.1:5000/api/logout`
    - `http://127.0.0.1:5000/api/blog`
+   - `http://127.0.0.1:5000/api/blog/<post_id>`
    - `http://127.0.0.1:5000/api/blogtest`
    - `http://127.0.0.1:5000/api/ir`
 
@@ -54,6 +62,24 @@
 
 ### APIの使用例
 
+#### `/api/signup` (POST)
+ユーザー登録（JSON形式で送信）
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"username": "ユーザー名", "password": "パスワード"}' http://127.0.0.1:5000/api/signup
+```
+
+#### `/api/login` (POST)
+ログイン（JSON形式で送信。以降のリクエストはCookieを利用するため、フロントエンドは`credentials: 'include'`を指定してください）
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"username": "ユーザー名", "password": "パスワード"}' http://127.0.0.1:5000/api/login
+```
+
+#### `/api/logout` (POST)
+ログアウト（ログイン済みセッションでのみ有効）
+```bash
+curl -X POST http://127.0.0.1:5000/api/logout
+```
+
 #### `/api/blog` (POST)
 投稿データをJSON形式で送信します。
 ```bash
@@ -66,11 +92,24 @@ curl -X POST -H "Content-Type: application/json" -d '{"title": "タイトル", "
 curl http://127.0.0.1:5000/api/blog
 ```
 
+#### `/api/blog/<post_id>` (GET)
+指定したIDの投稿データを取得します。
+```bash
+curl http://127.0.0.1:5000/api/blog/1
+```
+
 #### `/api/ir` (POST)
 外部APIにデータを転送します。
 ```bash
 curl -X POST -H "Content-Type: application/json" -d '{"url": "https://example.com"}' http://127.0.0.1:5000/api/ir
 ```
+
+---
+
+## フロントエンド（Next.jsなど）から利用する場合の注意
+
+- 認証付きAPI（ログイン・ログアウト・@login_required付きAPI）を利用する場合は、fetchやaxiosで`credentials: 'include'`を必ず指定してください。
+- Flask側は`CORS(app, supports_credentials=True)`でCORS対応済みです。
 
 ---
 
